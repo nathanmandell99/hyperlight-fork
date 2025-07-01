@@ -7,6 +7,8 @@ rustflags = [
   "code-model=small",
   "-C",
   "link-args=-e entrypoint",
+  "-C", 
+  "target-feature=+sse2,-soft-float",
 ]
 linker = "rust-lld"
 
