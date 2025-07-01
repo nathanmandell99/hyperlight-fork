@@ -22,7 +22,6 @@ extern crate hyperlight_guest;
 
 use alloc::string::ToString;
 use alloc::vec::Vec;
-use core::arch::asm;
 use core::hint::black_box;
 use hyperlight_common::flatbuffer_wrappers::function_call::FunctionCall;
 use hyperlight_common::flatbuffer_wrappers::function_types::{
@@ -33,16 +32,14 @@ use hyperlight_common::flatbuffer_wrappers::util::get_flatbuffer_result;
 use hyperlight_guest::error::{HyperlightGuestError, Result};
 use hyperlight_guest_bin::guest_function::definition::GuestFunctionDefinition;
 use hyperlight_guest_bin::guest_function::register::register_function;
+use libm::sqrt;
 
 const EXEC_UNIT: usize = 100;
 
-#[target_feature(enable = "sse2")]
-unsafe fn take_sqrts() {
+fn take_sqrts() {
     let mut tmp: f64 = black_box(10.0);
     for _ in 0..EXEC_UNIT {
-        unsafe {
-            asm!("sqrtsd {0}, {0}", inout(xmm_reg) tmp, options(nomem, nostack));
-        }
+        tmp = sqrt(tmp);
         black_box(tmp);
     }
 }
@@ -54,9 +51,7 @@ fn busy_spin(function_call: FunctionCall) -> Result<Vec<u8>> {
     ) {
         let total_iterations = multiplier * requested_cpu_time;
         for _ in 0..total_iterations {
-            unsafe {
-                black_box(take_sqrts());
-            }
+            black_box(take_sqrts());
         }
         Ok(get_flatbuffer_result(0))
     } else {
