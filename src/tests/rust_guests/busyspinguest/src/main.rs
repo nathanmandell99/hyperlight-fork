@@ -1,3 +1,19 @@
+/*
+Copyright 2025  The Hyperlight Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 #![no_std]
 #![no_main]
 
@@ -6,7 +22,7 @@ extern crate hyperlight_guest;
 
 use alloc::string::ToString;
 use alloc::vec::Vec;
-use core::arch::x86_64::{_mm_cvtsd_f64, _mm_set_sd, _mm_sqrt_sd};
+use core::arch::asm;
 use core::hint::black_box;
 use hyperlight_common::flatbuffer_wrappers::function_call::FunctionCall;
 use hyperlight_common::flatbuffer_wrappers::function_types::{
@@ -21,14 +37,10 @@ use hyperlight_guest_bin::guest_function::register::register_function;
 const EXEC_UNIT: usize = 100;
 
 fn take_sqrts() -> f64 {
-    let mut tmp: f64 = 0.0;
+    let mut tmp: f64 = black_box(10.0);
     for _ in 0..EXEC_UNIT {
         unsafe {
-            // Use SSE2 sqrt instruction equivalent to C.SQRTSD
-            // black_box prevents compiler optimizations
-            let input = _mm_set_sd(black_box(10.0));
-            let result = _mm_sqrt_sd(input, input);
-            tmp = _mm_cvtsd_f64(result);
+            asm!("sqrtsd {0}, {0}", inout(xmm_reg) tmp, options(nomem, nostack));
         }
         black_box(tmp);
     }
@@ -59,7 +71,7 @@ pub extern "C" fn hyperlight_main() {
     let busy_spin_def = GuestFunctionDefinition::new(
         "BusySpin".to_string(),
         Vec::from(&[ParameterType::UInt, ParameterType::UInt]),
-        ReturnType::VecBytes,
+        ReturnType::UInt,
         busy_spin as usize,
     );
 
