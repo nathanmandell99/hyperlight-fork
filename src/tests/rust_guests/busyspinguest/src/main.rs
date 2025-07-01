@@ -72,7 +72,7 @@ pub extern "C" fn hyperlight_main() {
     let busy_spin_def = GuestFunctionDefinition::new(
         "BusySpin".to_string(),
         Vec::from(&[ParameterType::UInt, ParameterType::UInt]),
-        ReturnType::UInt,
+        ReturnType::VecBytes,
         busy_spin as usize,
     );
 
