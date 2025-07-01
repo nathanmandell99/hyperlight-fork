@@ -36,7 +36,8 @@ use hyperlight_guest_bin::guest_function::register::register_function;
 
 const EXEC_UNIT: usize = 100;
 
-fn take_sqrts() -> f64 {
+#[target_feature(enable = "sse2")]
+unsafe fn take_sqrts() {
     let mut tmp: f64 = black_box(10.0);
     for _ in 0..EXEC_UNIT {
         unsafe {
@@ -44,7 +45,6 @@ fn take_sqrts() -> f64 {
         }
         black_box(tmp);
     }
-    tmp
 }
 
 fn busy_spin(function_call: FunctionCall) -> Result<Vec<u8>> {
@@ -54,8 +54,9 @@ fn busy_spin(function_call: FunctionCall) -> Result<Vec<u8>> {
     ) {
         let total_iterations = multiplier * requested_cpu_time;
         for _ in 0..total_iterations {
-            let result = take_sqrts();
-            black_box(result);
+            unsafe {
+                black_box(take_sqrts());
+            }
         }
         Ok(get_flatbuffer_result(0))
     } else {
