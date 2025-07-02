@@ -1,13 +1,19 @@
+use anyhow::anyhow;
 use hyperlight_host::func::call_ctx::MultiUseGuestCallContext;
 use hyperlight_host::sandbox::{Callable, MultiUseSandbox, UninitializedSandbox};
 use hyperlight_host::sandbox_state::sandbox::EvolvableSandbox;
 use hyperlight_host::sandbox_state::transition::Noop;
 use hyperlight_host::{GuestBinary, Result};
+use hyperlight_testing::rust_guest_as_pathbuf;
 
 fn main() {
-    let spin_path = String::from(
-        "/home/nathan/school/summer25/hyperlight-fork/src/hyperlight_testing/../tests/rust_guests/bin/debug/busyspinguest",
-    );
+    let buf = rust_guest_as_pathbuf("busyspinguest");
+    let spin_path = buf
+        .to_str()
+        .map(|s| s.to_string())
+        .ok_or_else(|| anyhow!("couldn't convert simple guest PathBuf to string"))
+        .unwrap();
+
     let sbox1: MultiUseSandbox = {
         let path = spin_path;
         let u_sbox = UninitializedSandbox::new(GuestBinary::FilePath(path), None).unwrap();
